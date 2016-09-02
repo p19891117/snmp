@@ -1,0 +1,198 @@
+package com.bjhit.controller;
+
+import java.io.PrintWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.bjhit.dao.model.SceneBack;
+import com.bjhit.dao.model.SceneInfo;
+import com.bjhit.service.NetTopoServiceImpl;
+import com.bjhit.service.TaskServiceImpl;
+import com.bjhit.service.VerifyTaskServiceImpl;
+
+@Controller
+@RequestMapping("/verTaskctrl")
+public class VerifyTaskController {
+	
+	@Autowired
+	private VerifyTaskServiceImpl verTaskService;
+	@Autowired
+    private NetTopoServiceImpl netTopoService;
+    @Autowired
+    private TaskServiceImpl taskService;
+	/**
+	 * 根据对应的task_id获取场景信息列表
+	 * @param id    对应任务Id
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(value="listVerifyTask_")
+	public String listVerifyTask_(String id , HttpServletRequest request,Model model){
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	    Map map = new HashMap();
+	    map.put("task_id", id);
+	    map.put("scetri_condition",request.getParameter("scetri_condition") == null ? "" : String.valueOf(request.getParameter("scetri_condition")));
+	    map.put("status",request.getParameter("status") == null ? "" : String.valueOf(request.getParameter("status")));
+		try {
+			if (null != request.getParameter("starTime")
+					&& !"".equals(request.getParameter("starTime"))) {
+				map.put("starTime", sdf.parse(String.valueOf(request
+						.getParameter("starTime"))));
+			} else {
+				map.put("starTime", null);
+			}
+			if (null != request.getParameter("endTime")
+					&& !"".equals(request.getParameter("starTime"))) {
+				map.put("endTime", sdf.parse(String.valueOf(request
+						.getParameter("endTime"))));
+			} else {
+				map.put("endTime", null);
+			}
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		model.addAttribute("sceneInfoList", new JSONArray(verTaskService.listSceneInfo(map)));
+		model.addAttribute("id", id);
+		model.addAttribute("task", taskService.getTaskById(Integer.valueOf(id)));
+		return "verifyTask/verifyTask_list";
+	}
+	
+	/**
+     * 根据对应的task_id获取场景信息列表
+     * @param id    对应任务Id
+     * @param model
+     * @return
+     */
+    @RequestMapping(value="listVerifyTask")
+    public String listVerifyTask(String id , HttpServletRequest request,Model model){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Map map = new HashMap();
+        map.put("task_id", id);
+        map.put("scetri_condition",
+          request.getParameter("scetri_condition") == null ? "" : String.valueOf(request.getParameter("scetri_condition")));
+        map.put("status",request.getParameter("status") == null ? "" : String.valueOf(request.getParameter("status")));
+        try {
+            if (null != request.getParameter("starTime")
+                    && !"".equals(request.getParameter("starTime"))) {
+                map.put("starTime", sdf.parse(String.valueOf(request
+                        .getParameter("starTime"))));
+            } else {
+                map.put("starTime", null);
+            }
+            if (null != request.getParameter("endTime")
+                    && !"".equals(request.getParameter("starTime"))) {
+                map.put("endTime", sdf.parse(String.valueOf(request
+                        .getParameter("endTime"))));
+            }else {
+                map.put("endTime", null);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        model.addAttribute("sceneInfoList", new JSONArray(verTaskService.listSceneInfo(map)));
+        String result = netTopoService.getTopoResult(id);
+        /*String result = "{\"nodeDataArray\":"
+                + "[{\"text\":\"192.168.2.152\",\"problem\":\"1\",\"type\":\"1\",\"key\":\"1\",\"ip\":\"192.168.2.152\"},"+
+                   "{\"text\":\"192.168.2.134\",\"problem\":\"\",\"type\":\"1\",\"key\":\"2\",\"ip\":\"192.168.2.134\"},"+
+                   "{\"text\":\"192.168.2.136\",\"problem\":\"\",\"type\":\"1\",\"key\":\"3\",\"ip\":\"192.168.2.136\"},"+
+                   "{\"text\":\"192.168.2.137\",\"problem\":\"\",\"type\":\"1\",\"key\":\"4\",\"ip\":\"192.168.2.137\"},"+
+                   "{\"text\":\"192.168.2.139\",\"problem\":\"\",\"type\":\"1\",\"key\":\"5\",\"ip\":\"192.168.2.139\"},"+
+                   "{\"text\":\"192.168.3.76\", \"problem\":\"\",\"type\":\"1\",\"key\":\"6\",\"ip\":\"192.168.3.76\"}],"+
+                        "\"linkDataArray\":"
+                 + "[{\"to\":\"1\",\"problem\":\"\",\"from\":\"2\"},"
+                  + "{\"to\":\"1\",\"problem\":\"\",\"from\":\"3\"},"+
+                    "{\"to\":\"1\",\"problem\":\"\",\"from\":\"4\"},"
+                  + "{\"to\":\"1\",\"problem\":\"\",\"from\":\"5\"},"+
+                    "{\"to\":\"1\",\"problem\":\"\",\"from\":\"6\"}]}";*/
+        model.addAttribute("result", result);
+        model.addAttribute("id", id);
+        model.addAttribute("task", taskService.getTaskById(Integer.valueOf(id)));
+        return "verifyTask/verifyTask_list";
+    }
+	
+	/**
+	 * 根据对应的场景信息id获取场景回溯
+	 * @param id
+	 * @param printWriter
+	 */
+	@RequestMapping("/listSceneBack")
+	public void listSceneBack(String id,PrintWriter printWriter){
+		List<SceneBack> sceneBackList = verTaskService.getSceneBackList(id);
+		StringBuffer rows = new StringBuffer();
+		for(int i=0;i<sceneBackList.size();i++){
+			SceneBack sb = sceneBackList.get(i);
+			rows.append("<tr><td class='txt_c'>");
+			rows.append(i+1);
+			rows.append("</td><td>");
+			rows.append(sb.getBackt_id());
+			rows.append("</td><td>");
+			rows.append(sb.getBackt_start());
+			rows.append("</td><td>");
+			rows.append(sb.getBackt_end());
+			rows.append("</td><td>");
+			rows.append(sb.getIsTrigge());
+			rows.append("</td></tr>");
+		}
+		printWriter.write(rows.toString());
+		printWriter.flush();
+		printWriter.close();
+		
+	}
+	
+	/**
+     * 根据对应的实验的起止时间和告警事件（每条告警包括：告警时间，id，告警设备ip，触发告警条件）
+     * @param taskid(实验id)
+     * @param printWriter
+     */
+    @RequestMapping("/getPlayAxisData")
+    public void getPlayAxisData(String taskid,PrintWriter printWriter){
+    	
+        HashMap<String, ArrayList<?>> map = new HashMap<String, ArrayList<?>>();
+        ArrayList<String> tt = new ArrayList<String>();//实验起止时间
+        
+        Map tMap = verTaskService.getTaskStartEndTime(taskid);
+        tt.add(tMap.get("starTime").toString());//实验开始时间
+        tt.add(tMap.get("endTime").toString());//实验结束时间
+        map.put("time", tt);
+        
+        ArrayList<Map<String,String>> warning = new ArrayList<Map<String,String>>();
+        ArrayList tempList = new ArrayList();
+
+    	Map<String,String> m = new HashMap<String,String>();
+    	m.put("task_id", taskid);
+    	tempList = (ArrayList)verTaskService.getSceneList(m);
+        map.put("warning", tempList);
+        
+        String object = JSONObject.valueToString(map);
+        printWriter.write(object);
+        printWriter.flush();
+        printWriter.close();
+    }
+    /**
+     * 根据对应的实验的SCNID查询报警信息
+     * @param scn_id(报警id)
+     * @param printWriter
+     */
+    @RequestMapping("/getWarningDataByScnID")
+    public void getWarningDataByScnID(String scn_id,PrintWriter printWriter){
+        String object = JSONObject.valueToString(verTaskService.getSceneMoreInfoByscnid(scn_id).get(0));
+        
+        printWriter.write(object);
+        printWriter.flush();
+        printWriter.close();
+    }
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.UserMapper">
+	<select id="getCount" resultType="int">
+		select count(1) user_num from t_user
+	</select>
+	
+	<select id="getUserList" resultType="com.bjhit.dao.model.User">
+		select * from t_user
+	</select>
+		
+	<insert id="saveUser" parameterType="com.bjhit.dao.model.User">
+		insert into t_user (username, password, email, telphone) 
+			values (#{username},#{password},#{email},#{telphone})
+	</insert>
+	
+	<select id="login" parameterType="com.bjhit.dao.model.User" resultType="com.bjhit.dao.model.User">
+		select * from t_user t where t.username = #{username} and t.password = #{password}
+	</select>
+</mapper>

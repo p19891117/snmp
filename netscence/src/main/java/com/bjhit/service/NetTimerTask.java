@@ -1,0 +1,97 @@
+package com.bjhit.service;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import com.bjhit.controller.TaskController;
+import com.bjhit.dao.model.Task;
+import com.bjhit.util.Constant;
+
+@Component
+public class NetTimerTask {
+    @Autowired
+    private TaskServiceImpl taskService;
+    @Autowired
+    private KafkaProducerService kafkaProducerService;
+    private static Logger logger = Logger.getLogger(TaskController.class); // 类名
+    /**
+     * 定时任务启动、结束式样场景
+     */
+    @Scheduled(cron="01 0/5 * * * ? ")   //5分钟启动一次
+    public void handle_timer(){
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String nowtime = format.format(new Date());
+        String agotime = getTimeAgo(1);
+        
+        //List<Task> starList = taskService.getTaskStarList(nowtime, agotime);
+        List<Task> endList = taskService.getTaskEndList(nowtime, agotime);
+        
+        /*for(int i=0; i<starList.size(); i++){
+            Task task = starList.get(i);
+            kafkaHandle(task.getId().toString(), "1");
+        }*/
+        
+        for(int i=0; i<endList.size(); i++){
+            Task task = endList.get(i);
+            kafkaHandle(task.getId().toString(), "3");
+        }
+    }
+    
+    private String getTimeAgo(int hour){
+        String agoTime = "";
+        Calendar cal = Calendar. getInstance ();
+        cal.set(Calendar. HOUR , Calendar. HOUR -hour ) ; //把时间设置为当前时间-1小时，同理，也可以设置其他时间
+        cal.set(Calendar. MONTH , Calendar. MONTH -hour); //当前月前一月
+        agoTime =  new  SimpleDateFormat( "yyyy-MM-dd HH:mm:ss" ).format(cal.getTime());//获取到完整的时间
+        return agoTime;
+    }
+    
+    private void kafkaHandle(String id, String type){
+        logger.info(id + "任务，任务调度自动执行命令：" + type);
+        //kafka  发送kafka任务号
+        if("1".equals(type)){
+            kafkaProducerService.createOrWriteTopic(id);
+            try { 
+                logger.info(id + "任务等待3秒发送启动命令。。。");
+                TimeUnit.MILLISECONDS.sleep(3000); 
+            } catch (InterruptedException e) {
+                e.printStackTrace();  
+            }
+        }
+        //kafka
+        kafkaProducerService.createOrWriteTopic(KafkaProperties.web_command, id + "#0" + type);
+        /**
+         * 获取线程中kafka消息值
+         */
+        Object lock = new Object();
+        Constant.kafka_lock.put(id, lock);
+        synchronized (lock) {
+            try {
+                logger.info(id + " wait " + Constant.FINDCOMMAND_TIMEOUT + " second !");
+                lock.wait(Constant.FINDCOMMAND_TIMEOUT * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        String value = null;
+        synchronized (Constant.kafka_value_lock) {
+            Constant.kafka_lock.remove(id); //移除全局锁
+            value = Constant.kafka_value.get(id);
+        
+            if(value != null){
+                Constant.kafka_value.remove(id); //移除全局值
+            }else{
+                logger.info(id + " task notified timeout!");
+            }
+        }
+        taskService.updateTaskById(id, value);
+    }
+}

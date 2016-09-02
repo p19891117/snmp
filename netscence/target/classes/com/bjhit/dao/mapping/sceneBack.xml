@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.SceneBackMapper">
+	<select id="getSceneBackList" parameterType="String" resultType="com.bjhit.dao.model.SceneBack">
+		select * from scene_back where scn_id=#{id}
+	</select>
+	
+	<select id="getBackupByTaskid" resultType="com.bjhit.dao.model.BackupInfoVo">
+		select * from bakcup_info where task=#{id} and scn_id = #{scnid}
+	</select>
+	
+	<select id="getSceneInfoByscnid" resultType="com.bjhit.dao.model.SceneInfo">
+		select t.`ip`,t.`sceTime`,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS
+			scetri_condition,t.`sce_conmment`,
+			t.`sce_description`,t.`sce_flag`,
+			t.`scn_id`,t.`storm_time`,
+			t.`strategy_id`,t.`task_id` from  scene_information t where  t.scn_id=#{scenceId}
+	</select>
+</mapper>

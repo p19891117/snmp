@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.SceneInfoMapper">
+	
+	<select id="getSceneInfoList" parameterType="String" resultType="com.bjhit.dao.model.SceneInfo">
+		select t.`ip`,t.`sceTime`,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS
+			scetri_condition,t.`sce_conmment`,
+			t.`sce_description`,t.`sce_flag`,
+			t.`scn_id`,t.`storm_time`,
+			t.`strategy_id`,t.`task_id` from  scene_information t where  t.task_id=#{id}	
+	</select>
+	
+	<select id="getNewSceneInfoList" parameterType="String" resultType="com.bjhit.dao.model.SceneInfo">
+		select t.`ip`,t.`sceTime`,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS
+			scetri_condition,t.`sce_conmment`,
+			t.`sce_description`,t.`sce_flag`,
+			t.`scn_id`,t.`storm_time`,
+			t.`strategy_id`,t.`task_id` from  scene_information t where  t.task_id=#{task_id} and t.sceTime >= #{starTime, jdbcType=DATE}
+	</select>
+	
+	<select id="getSceneMoreInfoList" parameterType="java.util.Map" resultType="java.util.Map">
+		select t.`ip`,t.`sceTime`,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS
+			scetri_condition,t.`sce_conmment`,
+			t.`sce_description`,t.`sce_flag`,
+			t.`scn_id`,t.`storm_time`,
+			t.`strategy_id`,t.`task_id`,b.name from  scene_information t,t_task b where t.task_id = b.id and  t.task_id=#{task_id}	
+		<if test="scetri_condition != null and '' != scetri_condition">
+                and t.scetri_condition like concat('%', #{scetri_condition, jdbcType=VARCHAR},'%')
+        </if>
+		 <if test="starTime != null">
+            <![CDATA[
+                and t.sceTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.sceTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and b.status != 0
+        order by t.sceTime desc
+	</select>
+	<select id="getTaskStartEndTime" parameterType="String" resultType="java.util.Map">
+		select b.starTime,b.endTime from  t_task b where id=#{taskid}	
+		
+	</select>
+	<select id="getSceneMoreInfoByscnid" parameterType="String" resultType="java.util.Map">
+		SELECT t.`ip`,t.`sceTime`,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS
+			scetri_condition,t.`sce_conmment`,
+			t.`sce_description`,t.`sce_flag`,
+			t.`scn_id`,t.`storm_time`,
+			t.`strategy_id`,t.`task_id`,b.name
+		FROM scene_information t,t_task b 
+		WHERE t.task_id = b.id AND
+			t.scn_id=#{scn_id}	
+		
+	</select>
+	<select id="getSceneList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT t.sceTime   `time`,t.scn_id   id,CONCAT((SELECT gather_name FROM gather_item
+			gi WHERE gi.gather_id = SUBSTRING_INDEX(t.scetri_condition, ",", 1)),
+			SUBSTRING_INDEX(t.scetri_condition, ",", - 1)) AS  `condition`,t.ip FROM  scene_information t,t_task b WHERE t.task_id = b.id AND  t.task_id=#{task_id}	
+		
+        and b.status != 0
+        order by t.sceTime desc
+	</select>
+	
+</mapper>

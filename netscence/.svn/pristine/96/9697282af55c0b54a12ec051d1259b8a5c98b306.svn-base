@@ -1,0 +1,33 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"  pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<html>
+<head>
+<link rel="stylesheet" href="<%=request.getContextPath()%>/css/layout1.css" type="text/css" media="screen" />
+<script src="<%=request.getContextPath()%>/js/jquery/jquery-1.9.0.min.js" type="text/javascript"></script>
+<title>展示列表</title>
+</head>
+<body>
+	<article class="module width_full">
+		<div class="clearfix">
+			<h3>全局配置:<span style="line-height:30px;">OID SET 配置（table）</span></h3>
+			<a href="<%=request.getContextPath()%>/Global_configctrl/addOidSet"  style="float:right; margin:3px 10px;"><input type="submit" value="新增" class="alt_btn1"> </a>
+		</div>
+		<div style="background: none;width: 98%;">
+		<table  class="tablesorter_b border" >
+			<tr> <td>oid</td><td>name</td> <td>操作</td> </tr>
+			<c:forEach var="oidset" items="${oidsetlist}">
+				<tr> 
+					<td>${oidset.oid}</td> 
+					<td>${oidset.name}</td> 
+					<td>
+						<a href="<%=request.getContextPath()%>/Global_configctrl/oidSubList?id=${oidset.id}">列出子项</a> 
+						<a href="<%=request.getContextPath()%>/Global_configctrl/editOidSet?id=${oidset.id}">修改</a>
+						<a href="<%=request.getContextPath()%>/Global_configctrl/deleteOidSet?id=${oidset.id}">删除</a>
+					</td> 
+				</tr>
+			</c:forEach>
+		</table>
+		</div>
+	</article>
+</body>
+</html>

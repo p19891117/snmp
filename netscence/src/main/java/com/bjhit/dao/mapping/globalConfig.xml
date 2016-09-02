@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.GlobalConfigMapper">
+	<select id="getGlobal_configList" parameterType="com.bjhit.dao.model.GatherItem"
+		resultType="java.util.Map">
+		select gc.* , ft.firmName_cn dev_firm_cn, dtt.dev_type dev_type_cn
+		from gather_item gc ,factory_table ft,device_type_table dtt
+		where gc.dev_type=dtt.id and gc.dev_firm=ft.scn_id and state = 1
+		<if test="gather_name != null and '' != gather_name">
+			and gc.gather_name like concat('%', #{gather_name, jdbcType=VARCHAR},'%')
+		</if>
+
+		<if test="dev_type != null and dev_type != ''">
+			and gc.dev_type = #{dev_type, jdbcType=INTEGER}
+		</if>
+		<if test="sys_type != null and sys_type != ''">
+			and gc.sys_type = #{sys_type, jdbcType=INTEGER}
+		</if>
+		<if test="complex_flag != null and complex_flag != ''">
+			and gc.complex_flag = #{complex_flag, jdbcType=INTEGER}
+		</if>
+       limit #{start, jdbcType=INTEGER}, #{max, jdbcType=INTEGER}
+	</select>
+	<select id="getGlobalconfigListForExcel" resultType="com.bjhit.dao.model.GatherItem">
+		select *
+		from gather_item gc 
+		where  state = 1
+		
+	</select>
+	<select id="getGlobalconfigDetailListForExcel" resultType="com.bjhit.dao.model.GatherItemDetail">
+		select *
+		from gather_item_detail gc 
+		where  state = 1
+		
+	</select>
+	<select id="getConfListByDevType" parameterType="String" resultType="com.bjhit.dao.model.GatherItem">
+        select * from gather_item where dev_type = #{devType} and state = 1
+    </select>
+
+	<insert id="addGlobalConfig" parameterType="com.bjhit.dao.model.GatherItem">
+		insert into gather_item(gather_name,note,dev_firm,dev_model,state,dev_type,complex_flag,sys_type)
+			values(#{gather_name},#{note},#{dev_firm},#{dev_model}, 1,#{dev_type},#{complex_flag},#{sys_type})
+	</insert>
+	<insert id="addGlobalConfigByExcel" parameterType="com.bjhit.dao.model.GatherItem">
+		insert into gather_item(gather_id,gather_name,note,dev_firm,dev_model,state,dev_type,complex_flag,sys_type,scence_flag,show_type)
+			values(#{gather_id},#{gather_name},#{note},#{dev_firm},#{dev_model}, 1,#{dev_type},#{complex_flag},#{sys_type},#{scence_flag},#{show_type})
+	</insert>
+	<insert id="backGlobalConfigByExcel" >
+		insert into gather_item_back(backno,gather_id,gather_name,note,dev_firm,dev_model,state,dev_type,complex_flag,sys_type,scence_flag,show_type)
+			select now(),gather_id,gather_name,note,dev_firm,dev_model,state,dev_type,complex_flag,sys_type,scence_flag,show_type from gather_item
+	</insert>
+	<update id="deleteGlobalConfig" parameterType="String">
+		update gather_item set state = 0 where gather_id= #{id}
+	</update>
+	
+	<select id="getGlobalConfig" parameterType="String" resultType="com.bjhit.dao.model.GatherItem">
+		select * from gather_item where gather_id=#{id}  and state = 1
+	</select>
+	
+	<update id="editGlobalConfig" parameterType="com.bjhit.dao.model.GatherItem">
+		update gather_item 
+			set dev_type=#{dev_type},gather_name=#{gather_name},note=#{note},dev_firm=#{dev_firm},dev_model=#{dev_model}
+			    ,complex_flag=#{complex_flag},sys_type=#{sys_type}
+				where gather_id=#{gather_id}
+	</update>
+	
+	<select id="getDev_list" resultType="com.bjhit.dao.model.DeviceType">
+		select * from device_type_table
+	</select>
+	
+	<select id="getFactory_list" resultType="com.bjhit.dao.model.Factory">
+		select * from factory_table
+	</select>
+	
+	<select id="getGlobal_configDetailList" parameterType="String" resultType="java.util.Map">
+        select a.*,b.gather_name,b.complex_flag from gather_item_detail a,gather_item b where a.gather_id = b.gather_id and a.gather_id = #{gather_id} and a.state = 1
+    </select>
+    
+    <insert id="addGlobalConfigDetail" parameterType="com.bjhit.dao.model.GatherItemDetail">
+		insert into gather_item_detail(oid_name_cn,oid_name_en,oid,operTime,state,note,oid_flag,gather_id,child_oid,gather_flag,oid_value_type,`read`,`write`)
+			values(#{oid_name_cn},#{oid_name_en},#{oid},#{operTime}, 1,#{note},#{oid_flag},#{gather_id},#{child_oid},#{gather_flag},#{oid_value_type},#{read},#{write})
+	</insert>
+	
+    <insert id="addGlobalConfigDetailByExcel" parameterType="com.bjhit.dao.model.GatherItemDetail">
+		insert into gather_item_detail(scn_id,oid_name_cn,oid_name_en,oid,operTime,state,note,oid_flag,gather_id,child_oid,gather_flag,oid_value_type,`read`,`write`)
+			values(#{scn_id},#{oid_name_cn},#{oid_name_en},#{oid},#{operTime}, 1,#{note},#{oid_flag},#{gather_id},#{child_oid},#{gather_flag},#{oid_value_type},#{read},#{write})
+	</insert>
+	<insert id="backGlobalConfigDetailByExcel" >
+		insert into gather_item_detail_back(backno,scn_id,oid_name_cn,oid_name_en,oid,operTime,state,note,oid_flag,gather_id,child_oid,gather_flag,oid_value_type,`read`,`write`)
+			select now(),scn_id,oid_name_cn,oid_name_en,oid,operTime,state,note,oid_flag,gather_id,child_oid,gather_flag,oid_value_type,`read`,`write` from gather_item_detail
+	</insert>
+	<update id="editGlobalConfigDetail" parameterType="com.bjhit.dao.model.GatherItemDetail">
+		update gather_item_detail 
+			set oid_name_cn=#{oid_name_cn},oid_name_en=#{oid_name_en},oid=#{oid},operTime=#{operTime},note=#{note},gather_flag=#{gather_flag},oid_value_type=#{oid_value_type},`read`=#{read},`write`=#{write}
+			    ,oid_flag=#{oid_flag},child_oid=#{child_oid}
+				where scn_id=#{scn_id}
+	</update>
+	
+	<select id="getGatherItemDetail" parameterType="String" resultType="com.bjhit.dao.model.GatherItemDetail">
+		select * from gather_item_detail where scn_id=#{scn_id}  and state = 1
+	</select>
+	
+	
+	<update id="deleteGlobalConfigByExcel" parameterType="String">
+		delete from gather_item  where gather_id= #{gather_id}
+	</update>
+	<update id="deleteGlobalConfigDetailByExcel" parameterType="String">
+		delete from gather_item_detail  where scn_id= #{scn_id}
+	</update>
+	<update id="deleteGatherItemDetail" parameterType="String">
+		update gather_item_detail set state = 0 where scn_id= #{id}
+	</update>
+	 <select id="getGatherItemCount" resultType="int" >
+        select count(*) from gather_item t where 1=1 
+        and t.state != 0
+        <if test="gather_name != null and '' != gather_name">
+			and t.gather_name like concat('%', #{gather_name, jdbcType=VARCHAR},'%')
+		</if>
+
+		<if test="dev_type != null and dev_type != ''">
+			and t.dev_type = #{dev_type, jdbcType=VARCHAR}
+		</if>
+		<if test="sys_type != null and sys_type != ''">
+			and t.sys_type = #{sys_type, jdbcType=VARCHAR}
+		</if>
+		<if test="complex_flag != null and complex_flag != ''">
+			and t.complex_flag = #{complex_flag, jdbcType=VARCHAR}
+		</if>
+    </select>
+    <select id="oidsetlist" resultType="com.bjhit.dao.model.TableOID">
+    	select * from table_oid where flag = '1'
+    </select>
+    
+    <select id="oidSubList" resultType="com.bjhit.dao.model.TableOIDSub" parameterType="int">
+    	select * from table_oid_sub where table_oid_id=#{id}
+    </select>
+
+   	<update id="deleteOidSet" parameterType="int">
+  		update table_oid set flag = '0' where id = #{id}
+ 	</update>
+    
+    <insert id="addOidSet">
+    	insert into table_oid(oid) value(#{oid})
+    </insert>
+    
+    <select id="findTableOidByID" resultType="com.bjhit.dao.model.TableOID" parameterType="int">
+    	select * from table_oid where id = #{id}
+    </select>
+    
+    <update id="editOidSet" >
+    	update table_oid set oid = #{oid, jdbcType=VARCHAR},name=#{name, jdbcType=VARCHAR} where id=#{id, jdbcType=INTEGER}
+    </update>
+    
+     <insert id="addOidSub">
+    	insert into table_oid_sub(table_oid_id,sub_oid,oid_value_type,`read`,`write`) value(#{table_oid_id, jdbcType=INTEGER},#{sub_oid, jdbcType=VARCHAR},#{oid_value_type, jdbcType=VARCHAR},#{read, jdbcType=VARCHAR},#{write, jdbcType=VARCHAR})
+    </insert>
+    
+    <delete id="deleteOidSub" parameterType="int">
+    	delete from table_oid_sub where id = #{id}
+    </delete>
+    
+    <select id="findTableSubOidByID" resultType="com.bjhit.dao.model.TableOIDSub" parameterType="int">
+    	select * from table_oid_sub where id=#{id}
+    </select>
+    
+    <update id="editOidSub" >
+    	update table_oid_sub set sub_oid = #{sub_oid, jdbcType=VARCHAR} , oid_value_type=#{oid_value_type, jdbcType=VARCHAR} , `read`=#{read, jdbcType=VARCHAR},`write`=#{write, jdbcType=VARCHAR} where id=#{id, jdbcType=INTEGER}
+    </update>
+    
+</mapper>

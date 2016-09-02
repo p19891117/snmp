@@ -1,0 +1,115 @@
+package com.bjhit.controller;
+
+import java.io.PrintWriter;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.bjhit.dao.model.GatherItem;
+import com.bjhit.dao.model.GatherItemDetail;
+import com.bjhit.dao.model.GlobalConfig;
+import com.bjhit.service.GlobaConfigServiceImpl;
+import com.bjhit.util.Pager;
+
+
+@Controller
+@RequestMapping("/Global_configctrl")
+public class GlobalConfigController {
+
+	@Autowired
+	private GlobaConfigServiceImpl globalConfigService;
+	
+	@RequestMapping("/listGlobalConfig")
+	public String listGlobalConfig(@ModelAttribute GatherItem gatherItem, Model model, HttpServletRequest request) {
+		int start = request.getParameter("page") == null ? 1 : Integer.valueOf(request.getParameter("page"));
+    	Pager pager=new Pager();
+		pager.setCurrentPage(start);
+		gatherItem.setStart((start-1)*pager.getPageSize());
+		gatherItem.setMax(pager.getPageSize());
+    	Pager p=globalConfigService.getGlobal_configList(gatherItem,pager);
+		model.addAttribute("globalConfiglist", p.getItems());
+        model.addAttribute("pager",p.getPagerStr());
+		model.addAttribute("dev_list",globalConfigService.getDev_list());
+		model.addAttribute("factory_list",globalConfigService.getFactory_list());
+		return "globalConfig/globalConfig_list";
+	}
+	
+	@RequestMapping("/addGlobalConfig")
+	public String  addGlobalConfig(GatherItem gatherItem ){
+		
+		globalConfigService.add(gatherItem);
+		
+		return "redirect:listGlobalConfig";
+	}
+	
+	@RequestMapping("/deleteGlobalConfig")
+	public String deleteGlobalConfig(String id){
+		
+		globalConfigService.delete(id);
+		return "redirect:listGlobalConfig";
+	}
+	
+	@RequestMapping("/updateGlobalConfig") 
+	public void updateGloalConfig(@RequestParam("id") String id, PrintWriter printWriter){
+		GatherItem gatherItem = globalConfigService.getGlobalConfig(id);
+		JSONObject jo = new JSONObject(gatherItem);
+		printWriter.write(jo.toString());
+		printWriter.flush();
+		printWriter.close();
+	}
+	
+	@RequestMapping("/editGlobalConfig")
+	public String editGlobalConfig(GatherItem gatherItem){
+		globalConfigService.editGlobalConfig(gatherItem);
+		return "redirect:listGlobalConfig";
+	}
+
+	@RequestMapping("/listGlobalConfigDetail")
+	public String listGlobalConfigDetail(
+			@RequestParam("gather_id") String gather_id,
+			@RequestParam("complex_flag") String complex_flag,
+			@ModelAttribute GatherItemDetail gatherItemDetail, Model model) {
+		model.addAttribute("globalConfigDetaillist",
+				globalConfigService.getGlobal_configDetailList(gather_id));
+		model.addAttribute("dev_list", globalConfigService.getDev_list());
+		model.addAttribute("factory_list",
+				globalConfigService.getFactory_list());
+		model.addAttribute("complex_flag",complex_flag);
+		model.addAttribute("gather_id",gather_id);
+
+		return "globalConfig/globalConfig_detaillist";
+	}
+	
+	@RequestMapping("/addGlobalConfigDetail")
+	public String  addGlobalConfigDetail(GatherItemDetail gatherItemDetail ){
+		globalConfigService.add(gatherItemDetail);
+		return "redirect:listGlobalConfigDetail?gather_id="+gatherItemDetail.getGather_id()+"&complex_flag="+gatherItemDetail.getComplex_flag();
+	}
+	@RequestMapping("/updateGlobalConfigDetail")
+	public String updateGlobalConfigDetail(GatherItemDetail gatherItemDetail){
+		globalConfigService.editGlobalConfigDetail(gatherItemDetail);
+		return "redirect:listGlobalConfigDetail?gather_id="+gatherItemDetail.getGather_id()+"&complex_flag="+gatherItemDetail.getComplex_flag();
+	}
+	
+	@RequestMapping("/getGatherItemDetail") 
+	public void getGatherItemDetail(@RequestParam("id") String id, PrintWriter printWriter){
+		GatherItemDetail gatherItemDetail = globalConfigService.getGatherItemDetail(id);
+		JSONObject jo = new JSONObject(gatherItemDetail);
+		printWriter.write(jo.toString());
+		printWriter.flush();
+		printWriter.close();
+	}
+	@RequestMapping("/deleteGatherItemDetail")
+	public String deleteGatherItemDetail(String id, String gather_id){
+		
+		globalConfigService.deleteGatherItemDetail(id);
+		return "redirect:listGlobalConfigDetail?gather_id="+gather_id+"&complex_flag=1";
+	}
+}

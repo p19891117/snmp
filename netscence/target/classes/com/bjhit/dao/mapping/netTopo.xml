@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.NetTopoMapper">
+    <insert id="saveTopoDevices" parameterType="java.util.List">
+        INSERT INTO t_topo_dev
+				(task_id,
+				dev_id,
+				dev_name,
+				dev_catgory,
+				dev_problem,
+				ip,
+				username,
+				password,
+				uuid,
+				vm_flag)
+		VALUES
+        <foreach collection="list" item="item" index="index" separator=",">
+                (#{item.task_id },
+                #{item.dev_id },
+                #{item.dev_name },
+                #{item.dev_catgory },
+                #{item.dev_problem },
+                #{item.ip},
+                #{item.username},
+				#{item.password},
+				#{item.uuid},
+                #{item.vm_flag} )
+        </foreach>
+    </insert>
+    
+    <insert id="saveTopoDeviceConns" parameterType="java.util.List">
+        INSERT INTO t_topo_dev_conn
+				(task_id,
+				deva_id,
+				devb_id,
+				conn_problem)
+		VALUES
+		<foreach collection="list" item="item" index="index" separator=",">
+                (#{item.task_id },
+                #{item.deva_id },
+                #{item.devb_id },
+                #{item.conn_problem })
+        </foreach>
+    </insert>
+    
+    <select id="getDevList" resultType="com.bjhit.dao.model.TopoDevice">
+        select * from t_topo_dev where task_id = #{taskid}
+    </select>
+    
+    <select id="getConnList" resultType="com.bjhit.dao.model.TopoDeviceConn">
+        select * from t_topo_dev_conn where task_id = #{taskid}
+    </select>
+</mapper>

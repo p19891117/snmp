@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.TaskMapper">
+    <select id="getTaskList" parameterType="com.bjhit.dao.model.Task" resultType="com.bjhit.dao.model.Task">
+        select t.*,
+			CASE WHEN t.status = 0 THEN '无效' 
+			 WHEN t.status = 1 THEN '创建'
+			 WHEN t.status = 2 THEN '启动'
+			 WHEN t.status = 3 THEN '暂停'
+			 WHEN t.status = 4 THEN '终止' END statusName from t_task t where 1=1 
+         <if test="name != null and '' != name">
+                and t.name like concat('%', #{name, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="status != null and status != ''">
+            and t.status = #{status, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="starTime != null">
+            <![CDATA[
+                and t.starTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.starTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and t.status != 0
+        order by t.operTime desc
+    </select>
+    
+    <insert id="saveTask" parameterType="com.bjhit.dao.model.Task" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_task
+			(name,
+			mark,
+			status,
+			starTime,
+			endTime,
+			operTime,
+			normalRate,
+			warningRate,
+			exceptRate,
+			beforWin,
+			afterWin,
+			topo_status,
+			flow_devip,
+			flow_enter_devip,
+			topo_gateway)
+			VALUES
+			(#{name},
+			#{mark},
+			#{status},
+			#{starTime},
+			#{endTime},
+			#{operTime},
+			#{normalRate},
+			#{warningRate},
+			#{exceptRate},
+			#{beforWin},
+			#{afterWin},
+			#{topo_status},
+			#{flow_devip},
+			#{flow_enter_devip},
+			#{topo_gateway})
+    </insert>
+        
+    <select id="getTaskById" parameterType="Integer" resultType="com.bjhit.dao.model.Task">
+        select * from t_task t where t.id = #{taskid}
+    </select>
+    
+    <update id="modifyTask" parameterType="com.bjhit.dao.model.Task">
+        update t_task t set 
+            t.name = #{name}, 
+            t.mark = #{mark},
+            t.status = #{status}, 
+            t.starTime = #{starTime}, 
+            t.endTime = #{endTime},
+            t.operTime = #{operTime}, 
+            t.normalRate = #{normalRate}, 
+            t.warningRate = #{warningRate},
+            t.exceptRate = #{exceptRate},
+            t.beforWin = #{beforWin}, 
+            t.afterWin = #{afterWin}, 
+            t.flow_devip = #{flow_devip},
+            t.flow_devip = #{flow_devip}
+         where t.id = #{id}
+    </update>
+    
+    <update id="deleteTask" parameterType="com.bjhit.dao.model.Task">
+        update t_task t set t.status = #{status} where t.id = #{id}
+    </update>
+    
+    <insert id="saveTaskConf" parameterType="java.util.List">
+        insert into t_task_config (task_id, config_id) values 
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskid}, #{item.confid})
+        </foreach>
+    </insert>
+    
+    <select id="getTaskConfList" resultType="com.bjhit.dao.model.GlobalConfig">
+	    select 
+		    t1.scn_id, t1.oid_name_cn, ifnull(t2.task_id, -1)  oid
+		from
+		    (select * from global_config where dev_type = #{devType}) t1
+		        left join
+		    (select * from t_task_config where task_id = #{taskid}) t2 ON t1.scn_id = t2.config_id
+    </select>
+    
+    <delete id="deleteTaskConf" parameterType="Integer">
+        delete from t_task_config where task_id = #{taskid}
+    </delete>
+    
+    <select id="getDevDataList" resultType="com.bjhit.dao.model.DevData">
+    	select * from data_table where taskNum = #{taskNum} and ip = #{ip} and oid in 
+    	<foreach item="item" index="index" collection="oid" open="(" separator="," close=")">  
+		  #{item}  
+		 </foreach> 
+    	<if test="timeflag == 0">
+    		order by batch desc, oid
+    		limit 0,#{limitNum}
+    	</if>
+    	<if test="timeflag == 1">
+    		order by id
+    	</if>
+    </select>
+</mapper>

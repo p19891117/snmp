@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.SequenceMapper">
+	<select id="currval" parameterType="String" resultType="int">
+		select currval(#{name}) from dual
+	</select>
+	
+	<select id="nextval" parameterType="String" resultType="int">
+		select nextval(#{name}) from dual
+	</select>
+	
+	<update id="setval" parameterType="com.bjhit.dao.model.Sequence">
+	    select setval(#{name}, #{current_value}) from dual
+	</update>
+		
+</mapper>

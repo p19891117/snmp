@@ -1,0 +1,22 @@
+#level
+log4j.rootLogger = INFO, c, f
+#console
+log4j.appender.c = org.apache.log4j.ConsoleAppender
+log4j.appender.c.layout = org.apache.log4j.PatternLayout
+log4j.appender.c.layout.ConversionPattern = %-d{yyyy-MM-dd HH:mm:ss} [%c]-[%p] %m%n
+#I
+log4j.appender.f=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.f.File=${catalina.home}/logs/netscence.log
+log4j.appender.f.Append=true
+log4j.appender.f.Threshold=DEBUG
+log4j.appender.f.layout=org.apache.log4j.PatternLayout  
+log4j.appender.f.layout.ConversionPattern= %-d{yyyy-MM-dd HH:mm:ss} [%c]-[%p] %m%n
+log4j.appender.f.DatePattern='.'yyyy-MM-dd
+#mybatis
+#log4j.logger.com.ibatis=DEBUG  
+#log4j.logger.com.ibatis.common.jdbc.SimpleDataSource=DEBUG  
+#log4j.logger.com.ibatis.common.jdbc.ScriptRunner=DEBUG  
+#log4j.logger.com.ibatis.sqlmap.engine.impl.SqlMapClientDelegate=DEBUG  
+#log4j.logger.java.sql.Connection=DEBUG  
+#log4j.logger.java.sql.Statement=DEBUG  
+#log4j.logger.java.sql.PreparedStatement=DEBUG

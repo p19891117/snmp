@@ -1,0 +1,203 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8" deferredSyntaxAllowedAsLiteral="true"%>
+<%@page import="java.util.Date"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jstl/fmt_rt"%>
+<%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form"%>
+
+<!doctype html>
+<html lang="en">
+    <head>
+    <meta charset="utf-8"/>
+    <title>面向网络安全实验和设备测试的实验场景恢复原型系统</title>
+    <link rel="stylesheet" href="<%=request.getContextPath() %>/css/layout.css" type="text/css" media="screen" />
+    <!--[if lt IE 9]>
+	<link rel="stylesheet" href="css/ie.css" type="text/css" media="screen" />
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+    <script src="<%=request.getContextPath()%>/js/jquery/jquery-1.9.0.min.js" type="text/javascript"></script>
+    <script src="<%=request.getContextPath()%>/js/jquery/jquery.tablesorter.min.js" type="text/javascript"></script>
+    <script type="text/javascript"src="<%=request.getContextPath()%>/js/ht/d3.js"></script>
+    <script type="text/javascript"src="<%=request.getContextPath()%>/js/timeline/realTime.js"></script>
+    <script type="text/javascript"src="<%=request.getContextPath()%>/js/ht/realTimeAxis.js"></script>
+    <script type="text/javascript"src="<%=request.getContextPath()%>/js/timeline/mytimeline.js"></script> 
+	<script type="text/javascript"src="<%=request.getContextPath()%>/js/common/load.js"></script>
+	
+    <script type="text/javascript">
+	$(document).ready(function() 
+    	{ 
+      	  $(".tablesorter").tablesorter(); 
+   	 } 
+	);
+	$(document).ready(function() {
+
+	//When page loads...
+	$(".tab_content").hide(); //Hide all content
+	$("ul.tabs li:first").addClass("active").show(); //Activate first tab
+	$(".tab_content:first").show(); //Show first tab content
+
+	//On Click Event
+	$("ul.tabs li").click(function() {
+
+		$("ul.tabs li").removeClass("active"); //Remove any "active" class
+		$(this).addClass("active"); //Add "active" class to selected tab
+		$(".tab_content").hide(); //Hide all tab content
+
+		var activeTab = $(this).find("a").attr("href"); //Find the href attribute value to identify the active tab + content
+		$(activeTab).fadeIn(); //Fade in the active ID content
+		return false;
+	});
+
+});
+
+function toNext(){
+	var scnid = $("#idScen").val();
+	var ipScen = $("#ipScen").text();
+	if(scnid == ""){
+		alert("请选择场景！");
+		return;
+	}
+	window.location.href = "toSceneBack2?id=${task.id }&scnid=" + scnid + "&ipScen=" + ipScen;
+}
+
+    </script>
+    </head>
+
+    <body>
+
+<!-- end of header bar -->
+
+<section id="main" class="column">
+      <article class="module width_full">
+    <div class="clearfix">
+          <h3 >场景回溯-- ${task.name } -- 场景选择</h3>
+        </div>
+    <div style="margin:20px 5%;background: none;width: 90%;">
+          <div class="control-group">
+				    <div style="width: 1172px;height: 110px">
+				        <div style="float: left;width: 1112px;">
+				            <div style="float: left;width: 50px;">
+				                <button onclick="left()" style="background:url(../images/left.png) no-repeat;height:52px;width:51px; margin-top:28px;border:none;"></button>
+				            </div>
+				            <div id="real" style="float: left;width: 1060px;height: 120px;"></div>
+				        </div>
+				        <div style="float: right;width: 52px;">
+				            <button onclick="right()" style="background:url(../images/right.png) no-repeat;height:52px;width:51px; margin-top:28px;border:none;"></button>
+				        </div>
+				    </div>
+				</div>
+				
+          <div class="tab_container">
+        <div id="tab1" class="tab_content" style="display: block;background: none;">
+              <table class="tablesorter_b border" cellspacing="0">
+            <thead>
+                  <tr>
+                <th>场景基本信息</th>
+              </tr>
+                </thead>
+            <tbody>
+                  <tr>
+                <td class="pl40">-场景发生时间：<span id="timeScen"></span><input type="hidden" id="idScen"></td>
+              </tr>
+                  <tr>
+                <td class="pl40">-场景触发设备：<span id="ipScen"></span></td>
+              </tr>
+                  <tr>
+                <td class="pl40">-场景触发条件：<span id="conditionScen"></span></td>
+              </tr>
+                </tbody>
+          </table>
+              <table class="tablesorter_b border" cellspacing="0" class="mt20">
+              <thead>
+            <tr>
+                  <th>场景记录基本信息</th>
+                </tr>
+          </thead>
+              <tbody>
+            <tr>
+                  <td class="pl40">-名称： ${task.name }
+                  </td>
+                </tr>
+            <tr>
+                  <td class="pl40">-流量设备IP：${task.flow_devip }</td>
+                </tr>
+            <tr>
+                  <td class="pl40">-采集频率：${task.normalRate } 秒</td>
+                </tr>
+          </tbody>
+              </table>
+            </div>
+      </div>
+          <!-- end of .tab_container --> 
+        </div>
+    <footer>
+          <div class="submit_link"> <a href="#">
+            <input type="button" value="下一步" class="alt_btn1" onclick="toNext()">
+            </a>
+            <a href="#">
+            <input type="button" value="返回列表" class="alt_btn1" onclick="javascript:history.go(-1);">
+            </a> </div>
+        </footer>
+  </article>
+    </section>
+<br />
+<br />
+<br />
+<br />
+</body>
+
+<script type="text/javascript">
+// 第一步  创建svg标签，供画轴使用
+			//var test = d3.selectAll("real");
+    var svg = d3.selectAll("#real").append("svg")
+            .attr("width", 1060)
+            .attr("height", 110);
+    //第二步
+    var initData = getAxisData();
+    var errors = initData.warning;
+    var test = realTime(svg)
+            .startTime("${startime}")//添加开始时间
+            .endTime("${endtime}")//添加结束时间，可以不添加
+            //添加已经过了当前时间的告警标识（当前时间之前的）
+            //.marks([{'time':'2015-03-23 09:55:00','id':'6871bdd9-1def-4e30-8978-7efeec223d1a','ip':'192.168.1.1','condition':'trigger condition:bigger than 0.60 of 60 which is 0.82'},
+            //    {'time':'2015-03-23 10:10:00','id':'6871bdd9-1def-4e30-8978-7efeec223d1a','ip':'192.168.1.1','condition':'trigger condition:bigger than 0.60 of 60 which is 0.82'}]);
+            .marks(errors);
+    //第三步 调用js画轴
+    test.render();
+    //第四步  在轴上实时添加告警标致
+    //test.addMark({'time':'2015-03-23 11:15:00','id':'6871bdd9-1def-4e30-8978-7efeec223d1a','ip':'192.168.1.1','condition':'trigger condition:bigger than 0.60 of 60 which is 0.82'});
+    //  移动轴的方法，moveAxis（）参数是移动的刻度数，1表示向左移每次一个刻度
+    function left(){
+        test.moveAxis(-1);
+    }
+    //移动轴的方法，moveAxis（）参数是移动的刻度数，-1表示向右移每次一个刻度
+    function right(){
+        test.moveAxis(1);
+    }
+    
+ function getAxisData(){
+    var axisData = "";
+    var dateTime = new Date();
+    var LocaleTime = dateTime.toLocaleTimeString();
+	$.ajax({
+        url : '../task/getAxisData',
+        data:{"task_id":'${task.id}',"time":LocaleTime},
+        type : 'post',
+        async: false,//同步
+        dataType:"json",
+        success : function(data) {
+            axisData = data;
+        }
+   	});
+   	
+	return axisData;
+}
+
+function clickScen(id, time, ip, condition){
+	$("#idScen").val(id);
+	$("#timeScen").text(time);
+	$("#ipScen").text(ip);
+	$("#conditionScen").text(condition);
+}
+</script>
+</html>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.Global_configMapper">
+	<select id="getGlobal_configList"  resultType="com.bjhit.dao.model.GlobalConfig">
+		select gc.* , ft.firmName_cn dev_firm_cn, dtt.dev_type dev_type_cn from global_config gc ,factory_table ft,device_type_table dtt 
+			where gc.dev_type=dtt.id and gc.dev_firm=ft.scn_id
+	</select>
+	
+	<select id="getConfListByDevType" parameterType="String" resultType="com.bjhit.dao.model.GlobalConfig">
+        select * from global_config where dev_type = #{devType}
+    </select>
+
+	<insert id="addGlobalConfig" parameterType="com.bjhit.dao.model.GlobalConfig">
+		insert into global_config(dev_type,oid_name_cn,oid,oid_name_en,note,dev_firm,dev_model)
+			values(#{dev_type},#{oid_name_cn},#{oid},#{oid_name_en},#{note},#{dev_firm},#{dev_model})
+	</insert>
+	
+	<delete id="deleteGlobalConfig" parameterType="String">
+		delete from global_config where scn_id= #{id}
+	</delete>
+	
+	<select id="getGlobalConfig" parameterType="String" resultType="com.bjhit.dao.model.GlobalConfig">
+		select * from global_config where scn_id=#{id}
+	</select>
+	
+	<update id="editGlobalConfig" parameterType="com.bjhit.dao.model.GlobalConfig">
+		update global_config 
+			set dev_type=#{dev_type},oid_name_cn=#{oid_name_cn},oid=#{oid},oid_name_en=#{oid_name_en},note=#{note},dev_firm=#{dev_firm},dev_model=#{dev_model}
+				where scn_id=#{scn_id}
+	</update>
+	
+	<select id="getDev_list" resultType="com.bjhit.dao.model.DeviceType">
+		select * from device_type_table
+	</select>
+	
+	<select id="getFactory_list" resultType="com.bjhit.dao.model.Factory">
+		select * from factory_table
+	</select>
+</mapper>

@@ -1,0 +1,576 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.TaskMapper">
+    <select id="getTaskList" parameterType="com.bjhit.dao.model.Task" resultType="com.bjhit.dao.model.Task">
+        select t.*,
+			CASE WHEN t.status = 0 THEN '无效' 
+			 WHEN t.status = 1 THEN '创建'
+			 WHEN t.status = 2 THEN '启动'
+			 WHEN t.status = 3 THEN '暂停'
+			 WHEN t.status = 4 THEN '终止' END statusName from t_task t where 1=1 
+         <if test="name != null and '' != name">
+                and t.name like concat('%', #{name, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="status != null and status != ''">
+            and t.status = #{status, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="starTime != null">
+            <![CDATA[
+                and t.starTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.starTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and t.status != 0
+        order by t.id desc
+        limit #{start, jdbcType=INTEGER}, #{max, jdbcType=INTEGER}
+    </select>
+    
+    <select id="getTaskList_hs" parameterType="com.bjhit.dao.model.Task" resultType="com.bjhit.dao.model.Task">
+        select t.*,
+			CASE WHEN t.status = 0 THEN '无效' 
+			 WHEN t.status = 1 THEN '创建'
+			 WHEN t.status = 2 THEN '启动'
+			 WHEN t.status = 3 THEN '暂停'
+			 WHEN t.status = 4 THEN '终止' END statusName from t_task t where 1=1 
+         <if test="name != null and '' != name">
+                and t.name like concat('%', #{name, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="status != null and status != ''">
+            and t.status = #{status, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="starTime != null">
+            <![CDATA[
+                and t.starTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.starTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and t.parent_taskid = 0
+        and t.status != 0
+        order by t.id desc
+        limit #{start, jdbcType=INTEGER}, #{max, jdbcType=INTEGER}
+    </select>
+    
+    <select id="getTaskCount" resultType="int" >
+        select count(*) from t_task t where 1=1 
+         <if test="name != null and '' != name">
+                and t.name like concat('%', #{name, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="status != null and status != ''">
+            and t.status = #{status, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="starTime != null">
+            <![CDATA[
+                and t.starTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.starTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and t.status != 0
+    </select>
+    
+    <select id="getTaskCount_hs" resultType="int" >
+        select count(*) from t_task t where 1=1 
+         <if test="name != null and '' != name">
+                and t.name like concat('%', #{name, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="status != null and status != ''">
+            and t.status = #{status, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="starTime != null">
+            <![CDATA[
+                and t.starTime >= #{starTime, jdbcType=DATE}
+            ]]>
+        </if>
+        <if test="endTime != null">
+            <![CDATA[
+                and t.starTime <= #{endTime, jdbcType=DATE}
+            ]]>
+        </if>
+        and t.parent_taskid = 0
+        and t.status != 0
+    </select>
+    <insert id="saveTask" parameterType="com.bjhit.dao.model.Task" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_task
+			(name,
+			mark,
+			status,
+			starTime,
+			endTime,
+			operTime,
+			normalRate,
+			warningRate,
+			exceptRate,
+			swingTime,
+			beforWin,
+			afterWin,
+			topo_status,
+			flow_devip,
+			flow_enter_devip,
+			topo_gateway,
+			parent_taskid)
+			VALUES
+			(#{name},
+			#{mark},
+			#{status},
+			#{starTime},
+			#{endTime},
+			#{operTime},
+			#{normalRate},
+			#{warningRate},
+			#{exceptRate},
+			#{swingTime},
+			#{beforWin},
+			#{afterWin},
+			#{topo_status},
+			#{flow_devip},
+			#{flow_enter_devip},
+			#{topo_gateway},
+			#{parent_taskid})
+    </insert>
+        
+    <select id="getTaskById" parameterType="Integer" resultType="com.bjhit.dao.model.Task">
+        select * from t_task t where t.id = #{taskid}
+    </select>
+    
+    <update id="modifyTask" parameterType="com.bjhit.dao.model.Task">
+        update t_task t set 
+            t.name = #{name}, 
+            t.mark = #{mark},
+            t.starTime = #{starTime}, 
+            t.endTime = #{endTime},
+            t.operTime = #{operTime}, 
+            t.normalRate = #{normalRate}, 
+            t.warningRate = #{warningRate},
+            t.exceptRate = #{exceptRate},
+            t.swingTime = #{swingTime},
+            t.beforWin = #{beforWin}, 
+            t.afterWin = #{afterWin}, 
+            t.flow_devip = #{flow_devip},
+            t.flow_devip = #{flow_devip}
+         where t.id = #{id}
+    </update>
+    
+    <update id="modifyTaskTime" parameterType="com.bjhit.dao.model.Task">
+        update t_task t set 
+        	t.status = #{status},
+        	<if test="starTime != null and starTime != ''">
+        	t.starTime = #{starTime}, 
+        	</if>
+            <if test="endTime != null and endTime != ''">
+        	t.endTime = #{endTime},
+        	</if>
+            t.operTime = #{operTime}
+         where t.id = #{id}
+    </update>
+    
+    <update id="deleteTask" parameterType="com.bjhit.dao.model.Task">
+        update t_task t set t.status = #{status} where t.id = #{id}
+    </update>
+    
+    <insert id="saveTaskConf" parameterType="java.util.List">
+        insert into t_task_config (task_id, config_id) values 
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.taskid}, #{item.confid})
+        </foreach>
+    </insert>
+    
+    <select id="getTaskConfList" resultType="com.bjhit.dao.model.GatherItem">
+	    select 
+		    t1.gather_id, t1.gather_name,t1.sys_type, ifnull(t2.task_id, -1)  oid
+		from
+		    (select * from gather_item where dev_type = #{devType} and state = 1) t1
+		        left join
+		    (select * from t_task_config where task_id = #{taskid}) t2 ON t1.gather_id = t2.config_id
+    </select>
+    
+    <delete id="deleteTaskConf" parameterType="Integer">
+        delete from t_task_config where task_id = #{taskid}
+    </delete>
+    
+    <select id="getDevDataListAll" resultType="com.bjhit.dao.model.DevData">
+    	SELECT DISTINCT 
+		  a.oid,
+		  a.batch,
+		  a.value 
+		FROM
+		  data_table a,
+		  (SELECT 
+		    t.oid,
+		    MAX(t.batch) batch 
+		  FROM
+		    data_table t 
+		  WHERE taskNum = #{taskNum} 
+		    AND ip = #{ip}
+		    AND oid IN 
+		  <foreach item="item" index="index" collection="oidlist" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>
+		  GROUP BY t.oid) b 
+		WHERE a.oid = b.oid 
+		  AND a.batch = b.batch 
+		  AND a.taskNum = #{taskNum} 
+		  AND a.ip = #{ip} 
+    </select>
+    
+    <select id="getDevDataList" resultType="com.bjhit.dao.model.DevData">
+    	select * from data_table where taskNum = #{taskNum} and ip = #{ip} and oid in 
+	     <foreach item="item" index="index" collection="oidlist" open="(" separator="," close=")"> 
+	    #{item} 
+	   </foreach> 
+	     <if test="timeflag == 0">
+	      order by batch desc, oid
+	      limit 0,#{limitNum}
+	     </if>
+	     <if test="timeflag == 1">
+	      order by id
+	     </if>
+    </select>
+    
+    <select id="getLastBatchs" resultType="com.bjhit.dao.model.DevData">
+    	SELECT DISTINCT 
+		    t1.batch , t1.batchTime
+		  FROM
+		    data_table t1 
+		  WHERE t1.taskNum = #{taskNum}
+		  ORDER BY t1.batch DESC 
+		  LIMIT 0, #{limitNum}
+    </select>
+    
+    <select id="getMultiData" resultType="com.bjhit.dao.model.DevData">
+    	SELECT DISTINCT 
+		  t.batch,
+		  t.ip,
+		  t.oid,
+		  t.value 
+		FROM
+		  data_table t 
+		WHERE t.taskNum = #{taskNum} 
+		  AND t.ip = #{ip} 
+		  AND t.oid IN 
+		  <foreach item="item" index="index" collection="oidlist" open="(" separator="," close=")">  
+		  	#{item}  
+		  </foreach>
+		  AND t.batch IN
+		  <foreach item="item1" index="index" collection="batchlist" open="(" separator="," close=")">  
+		  	#{item1}  
+		  </foreach>
+		ORDER BY 
+		  t.batch, t.oid
+    </select>
+    
+    <select id="ajaxGetDevInfo" resultType="java.util.HashMap">
+    	SELECT c.sys_type, c.gather_id, 
+    	CASE WHEN c.sys_type = '1' THEN CONCAT(c.gather_name,'（系统）')
+	       WHEN c.sys_type = '2' THEN CONCAT(c.gather_name,'（接口）')
+	       WHEN c.sys_type = '3' THEN CONCAT(c.gather_name,'（IP）')
+	       WHEN c.sys_type = '4' THEN CONCAT(c.gather_name,'（TCP）')
+	       WHEN c.sys_type = '5' THEN CONCAT(c.gather_name,'（UDP）')
+	       WHEN c.sys_type = '6' THEN CONCAT(c.gather_name,'（ICMP）')
+	       ELSE CONCAT(c.gather_name,'(其他)')
+	       END AS gather_name
+    	FROM t_topo_dev a, t_task_config b, gather_item c
+		WHERE a.dev_catgory = c.dev_type
+			AND b.config_id = c.gather_id
+			AND a.task_id = #{0} 
+			AND a.ip = #{1} 
+			AND b.task_id = #{0}  
+			and c.scence_flag = 1
+			and c.state = 1
+		order by c.sys_type
+    </select>
+    
+    <select id="getFindConfigList" resultType="com.bjhit.dao.model.ScenceFindConfigVo">
+    	select a.*,b.gather_name,
+    	case 
+        when compare_type = 1 then '大于'
+        when compare_type = 2 then '小于'
+        else '未知' END compare_type_name,
+        case 
+        when regular_type = 2 then '振幅触发'
+        when regular_type = 1 then '阀值触发'
+        else '未知' END regular_type_name
+         from t_scence_find_config a, gather_item b where a.gather_id = b.gather_id and task_id = #{task_id} 
+         <if test="ip!=null and ip!=''">
+         	and ip = #{ip} 
+         </if>
+         
+         order by id desc
+    </select>
+    
+    <select id="getFindListExists" resultType="com.bjhit.dao.model.ScenceFindConfigVo">
+    	select * from t_scence_find_config where task_id = #{task_id} 
+    	<if test="ip != null and ip != ''">
+    		and ip = #{ip} 
+    	</if>
+    	<if test="gather_id != null and gather_id != ''">
+    		and gather_id = #{gather_id} 
+    	</if>
+    	<if test="compare_type != null and compare_type != ''">
+    		and compare_type = #{compare_type}
+    	</if>
+    	<if test="regular_type != null and regular_type != ''">
+    		and regular_type = #{regular_type}
+    	</if>
+    </select>
+    <delete id="deleteFind">
+    	delete from t_scence_find_config where id = #{0}
+    </delete>
+    
+    <insert id="saveFindConfig">
+    	insert into t_scence_find_config (task_id, ip, gather_id, value, compare_type, regular_type) 
+    	values (#{task_id}, #{ip}, #{gather_id}, #{value}, #{compare_type}, #{regular_type})
+    </insert>
+    
+    <select id="topoDevicesByTaskANDCategary" resultType="com.bjhit.dao.model.TopoDevice">
+        SELECT * FROM t_topo_dev t WHERE t.task_id =#{task_id}  AND t.dev_catgory =#{dev_type}
+    </select>
+    
+    <select id="getTaskStarList" resultType="com.bjhit.dao.model.Task">
+        SELECT id FROM t_task t WHERE t.status = 1 AND 
+        <![CDATA[
+            UNIX_TIMESTAMP(t.starTime) <= UNIX_TIMESTAMP(#{nowtime})
+            and 
+            UNIX_TIMESTAMP(t.starTime) >= UNIX_TIMESTAMP(#{agotime})
+            and t.starTime is not null
+        ]]>
+    </select>
+    
+    <select id="getTaskEndList" resultType="com.bjhit.dao.model.Task">
+        SELECT id FROM t_task t WHERE t.status IN (2,3) AND 
+        <![CDATA[
+            UNIX_TIMESTAMP(t.endTime) <= UNIX_TIMESTAMP(#{nowtime})
+            and 
+            UNIX_TIMESTAMP(t.endTime) >= UNIX_TIMESTAMP(#{agotime})
+            and t.endTime is not null
+        ]]>
+    </select>
+    
+    <select id="getCalcOidValue" resultType="com.bjhit.dao.model.ComplexDataVo">
+    	select calc_value, gather_id from complex_data where taskNum = #{0} and ip = #{1} and gather_id = #{2} ORDER BY batch DESC LIMIT 0,1
+    </select>
+    
+    <select id="getTaskIp" resultType="com.bjhit.dao.model.GatherItemTree">
+    	SELECT a.ip, a.dev_id FROM t_topo_dev a WHERE task_id = #{task_id}
+    </select>
+    
+    <select id="getTaskIpSystype" resultType="com.bjhit.dao.model.GatherItemTree">
+    	SELECT 
+		  a.dev_id,
+		  b.sys_type,
+		  CONCAT(a.dev_id, b.sys_type) item_id,
+		  CASE
+		    WHEN b.sys_type = 1 
+		    THEN 'system' 
+		    WHEN b.sys_type = 2 
+		    THEN 'interface' 
+		    WHEN b.sys_type = 3 
+		    THEN 'ip' 
+		    WHEN b.sys_type = 4 
+		    THEN 'tcp' 
+		    WHEN b.sys_type = 5 
+		    THEN 'udp' 
+		    WHEN b.sys_type = 6 
+		    THEN 'icmp' 
+		  END sys_type_name 
+		FROM
+		  t_topo_dev a,
+		  gather_item b,
+		  t_task_config c 
+		WHERE a.task_id = #{task_id} 
+		  AND c.task_id = #{task_id} 
+		  AND a.dev_catgory = b.dev_type 
+		  AND b.gather_id = c.config_id 
+		  AND b.complex_flag = 1
+		GROUP BY a.dev_id,
+		  b.sys_type 
+    </select>
+    
+    <select id="getGatherItems" resultType="com.bjhit.dao.model.GatherItemTree">
+    	SELECT
+    	  CONCAT(a.dev_id, b.sys_type) item_id,
+		  b.gather_id,
+		  b.gather_name 
+		FROM
+		  t_topo_dev a,
+		  gather_item b,
+		  t_task_config c 
+		WHERE a.task_id = #{task_id} 
+		  AND c.task_id = #{task_id} 
+		  AND a.dev_catgory = b.dev_type 
+		  AND b.complex_flag = 1
+		  AND b.gather_id = c.config_id 
+    </select>
+    
+    
+    
+    
+     <select id="getFileBackUpCount" resultType="int" >
+        select count(*) from file_backup t where 1=1 and valid=1
+         <if test="backup_files != null and '' != backup_files">
+                and t.backup_files like concat('%', #{backup_files, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="ip != null and ip != ''">
+            and t.ip = #{ip, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="hardware_type != null and hardware_type != ''">
+            and t.hardware_type = #{hardware_type, jdbcType=INTEGER} 
+        </if>
+        
+    </select>
+     <select id="getFileBackUpList" parameterType="com.bjhit.dao.model.FileBackUp" resultType="com.bjhit.dao.model.FileBackUp">
+        select t.id,ip,username,passwd,ftp_port,device_type,back_command,recover_command,dev_type as hardware_type,backup_files from file_backup t,device_type_table a where 1=1 and a.id=t.hardware_type and valid=1
+        <if test="backup_files != null and '' != backup_files">
+                and t.backup_files like concat('%', #{backup_files, jdbcType=VARCHAR},'%')
+        </if>
+        
+        <if test="ip != null and ip != ''">
+            and t.ip = #{ip, jdbcType=INTEGER} 
+        </if>
+        
+        <if test="hardware_type != null and hardware_type != ''">
+            and t.hardware_type = #{hardware_type, jdbcType=INTEGER} 
+        </if>
+        order by t.id desc
+        limit #{start, jdbcType=INTEGER}, #{max, jdbcType=INTEGER}
+    </select>
+    
+    <update id="deletefileback" parameterType="com.bjhit.dao.model.FileBackUp">
+        update file_backup t set t.valid = 0 where t.id = #{id}
+    </update>
+    <insert id="savefileback" parameterType="com.bjhit.dao.model.FileBackUp" useGeneratedKeys="true" keyProperty="id">
+	INSERT INTO file_backup
+	(ip,
+	username,
+	passwd,
+	ftp_port,
+	device_type,
+	back_command,
+	recover_command,
+	hardware_type,
+	backup_files )
+	VALUES
+	(#{ip},
+	#{username},
+	#{passwd},
+	#{ftp_port},
+	#{device_type},
+	#{back_command},
+	#{recover_command},
+	#{hardware_type},
+	#{backup_files})
+    </insert>
+     <update id="modifyfileback" parameterType="com.bjhit.dao.model.FileBackUp">
+	update file_backup t set
+		ip=#{ip},
+		username=#{username},
+		passwd=#{passwd},
+		ftp_port=#{ftp_port},
+		device_type=#{device_type},
+		back_command=#{back_command},
+		recover_command=#{recover_command},
+		hardware_type=#{hardware_type},
+		backup_files=#{backup_files}
+	where t.id = #{id}
+    </update>
+    <select id="getfilebackbyId" parameterType="String" resultType="com.bjhit.dao.model.FileBackUp">
+		select * from file_backup where id=#{id}  and valid = 1
+	</select>
+	
+	<!-- 判断设备类型 -->
+	<select id="judgeType" resultType="String">
+		select dtt.id from t_topo_dev ttd ,device_type_table dtt where ttd.task_id=#{task_id}
+			and ttd.ip=#{ip}
+			and ttd.dev_catgory=dtt.id
+	</select>
+	
+	<!-- 获取虚拟机快照总记录数 -->
+	 <select id="getVmbackServerCount" resultType="int" >
+        select count(*) from vm_backup_server t where 1=1 
+        <if test="serverIp != null and serverIp != ''">
+            and t.server_ip = #{serverIp} 
+        </if>
+    </select>
+    
+   	<!--  获取虚拟机快照信息列表 -->
+     <select id="getVmbackServerList" parameterType="com.bjhit.dao.model.VmbackServer" resultType="com.bjhit.dao.model.VmbackServer">
+        select t.id serverId, t.server_ip serverIp,t.username,t.passwd from vm_backup_server t  where 1=1
+        <if test="serverIp != null and serverIp != ''">
+            and t.server_ip = #{serverIp} 
+        </if>
+        order by t.id desc
+        limit #{start, jdbcType=INTEGER}, #{max, jdbcType=INTEGER}
+    </select>
+    
+  	<!--   根据服务端id获取与之关联的客户端信息列表 -->
+     <select id="getVmbackClientList" parameterType="Integer" resultType="com.bjhit.dao.model.VmbackClient">
+        select t.id clientId , t.server_id serverId ,t.client_ip clientIp , t.uuid from vm_backup_client t  where 1=1
+        <if test="serverId != null and serverId != ''">
+            and t.server_id = #{serverId, jdbcType=INTEGER} 
+        </if>
+        order by t.id desc
+    </select>
+    
+    <!-- 根据服务端id查询整条记录 -->
+    <select id="getVmbackServerbyId" parameterType="Integer" resultType="com.bjhit.dao.model.VmbackServer">
+    	 select t.id serverId, t.server_ip serverIp,t.username,t.passwd from vm_backup_server t  where 1=1
+        <if test="serverId != null and serverId != ''">
+            and t.id = #{serverId , jdbcType=INTEGER} 
+        </if>
+    </select>
+    
+    <!-- 修改虚拟机快照配置 -->
+    <update id="updateVmbackServer" parameterType="com.bjhit.dao.model.VmbackServer" >
+    	update vm_backup_server t set 
+            t.server_ip = #{serverIp},
+            t.username = #{username}, 
+            t.passwd = #{passwd}
+         where t.id = #{serverId , jdbcType=INTEGER}
+    </update>
+    
+    <!-- 根据id删除虚拟机快照服务端配置 -->
+    <delete id="deleteVmbackById">
+    	delete from vm_backup_server where id = #{serverId} 
+    </delete>
+    
+    <insert id="saveVmback" parameterType="com.bjhit.dao.model.VmbackServer">
+    	insert into vm_backup_server ( server_ip, username, passwd) 
+    	values (#{serverIp}, #{username}, #{passwd})
+    </insert>
+    
+    <insert id="saveVmbackClient"  parameterType="com.bjhit.dao.model.VmbackClient">
+    	insert into vm_backup_client ( server_id,client_ip ,uuid) 
+    	values (#{serverId}, #{clientIp}, #{uuid})
+    </insert>
+    
+    <!-- 根据id删除虚拟机快照客户端配置 -->
+    <delete id="deleteVmbackClientById">
+    	delete from vm_backup_client where id=#{clientId}
+    </delete>
+    
+   <!--  获取任务采集项 -->
+   <select id="getTaskConfigList" resultType="com.bjhit.dao.model.TaskConfig">
+   		select t.id , t.task_id taskid , t.config_id confid from t_task_config t where t.task_id =#{id}
+   </select>
+</mapper>

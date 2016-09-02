@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bjhit.dao.mapper.SceneInfoMapper">
+	
+	<select id="getSceneInfoList" parameterType="String" resultType="com.bjhit.dao.model.SceneInfo">
+		select * from  scene_information where  task_id=#{id}	
+	</select>
+
+</mapper>

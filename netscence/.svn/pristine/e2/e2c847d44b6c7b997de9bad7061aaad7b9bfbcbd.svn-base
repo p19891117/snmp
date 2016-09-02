@@ -1,0 +1,627 @@
+package com.bjhit.service;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.bjhit.dao.mapper.GlobalConfigMapper;
+import com.bjhit.dao.mapper.NetTopoMapper;
+import com.bjhit.dao.mapper.TaskMapper;
+import com.bjhit.dao.model.ComplexDataVo;
+import com.bjhit.dao.model.DevData;
+import com.bjhit.dao.model.DeviceType;
+import com.bjhit.dao.model.FileBackUp;
+import com.bjhit.dao.model.GatherItem;
+import com.bjhit.dao.model.GatherItemTree;
+import com.bjhit.dao.model.ScenceFindConfigVo;
+import com.bjhit.dao.model.Task;
+import com.bjhit.dao.model.TaskConfig;
+import com.bjhit.dao.model.TopoDevice;
+import com.bjhit.dao.model.TopoDeviceConn;
+import com.bjhit.dao.model.VmbackClient;
+import com.bjhit.dao.model.VmbackServer;
+import com.bjhit.jws.JwsFlowDevClient;
+import com.bjhit.util.Pager;
+
+/**
+ * @Description TODO
+ * @author lp
+ * @date 2014年8月19日
+ */
+@Service
+public class TaskServiceImpl {
+    @Autowired
+    private TaskMapper taskMapper;
+    @Autowired
+    private GlobalConfigMapper global_configMapper;
+    @Autowired
+    private NetTopoServiceImpl netTopoService;
+    @Autowired
+    private OidParseServiceImpl oidParseServiceImpl;
+    
+    @Autowired
+    private NetTopoMapper netTopoMapper;
+    
+    private String task_id_t;
+
+    public String getTask_id_t() {
+        return task_id_t;
+    }
+
+    public void setTask_id_t(String task_id_t) {
+        this.task_id_t = task_id_t;
+    }
+
+    
+    public Pager getTaskList(Task task,Pager p) {
+        //总记录数
+		p.setTotalCount(taskMapper.getTaskCount(task));
+		p.setItems(taskMapper.getTaskList(task));
+		
+        return p;
+    }
+    
+    public Pager getTaskList_hs(Task task,Pager p) {
+        //总记录数
+        p.setTotalCount(taskMapper.getTaskCount_hs(task));
+        p.setItems(taskMapper.getTaskList_hs(task));
+        
+        return p;
+    }
+    
+    public Pager filebacklist(FileBackUp fileBackUp,Pager p) {
+        //总记录数
+		p.setTotalCount(taskMapper.getFileBackUpCount(fileBackUp));
+		p.setItems(taskMapper.getFileBackUpList(fileBackUp));
+		
+        return p;
+    }
+    
+    @Transactional
+    public Pager vmbacklist(VmbackServer vmbackServer,Pager p) {
+        //总记录数
+		p.setTotalCount(taskMapper.getVmbackServerCount(vmbackServer));
+		List<VmbackServer> vmbsList = taskMapper.getVmbackServerList(vmbackServer);
+		if(vmbsList != null && vmbsList.size() > 0){
+			for(int i = 0 ; i < vmbsList.size() ; i++){
+				List<VmbackClient> vmbcList = taskMapper.getVmbackClientList(vmbsList.get(i).getServerId());
+				vmbsList.get(i).setVmbackClientList(vmbcList);
+			}
+		}
+		p.setItems(vmbsList);
+        return p;
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    
+    @Transactional
+    public int saveTask(Task task, File file) {
+        //int taskid = sequenceServiceImpl.getAndSetNextVal(Constant.SEQ_TASK_ID);
+        //task.setId(taskid);
+        task.setStatus(1); //1:创建
+        task.setTopo_status(1);//0:未发现
+        task.setOperTime(new Date());
+        
+        taskMapper.saveTask(task); 
+        int taskid = task.getId();
+        //解析采集项配置参数
+        String[] confids = task.getConfid().split(",");
+        List list = new ArrayList();
+        for (int i = 0; i < confids.length; i++) {
+            if(confids[i] != null && !"".equals(confids[i])){
+                Map map = new HashMap();
+                map.put("taskid", taskid);
+                map.put("confid", new Integer(confids[i]));
+                list.add(map);
+            }
+        }
+        
+        if(list != null && list.size() > 0){
+            taskMapper.saveTaskConf(list);
+        }
+        netTopoService.parseSaveXmlDevicesConns(file, String.valueOf(taskid));
+        return taskid;
+    }
+
+    
+    public Task getTaskById(Integer taskid) {
+        return taskMapper.getTaskById(taskid);
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    
+    @Transactional
+    public void modifyTask(Task task) {
+        task.setOperTime(new Date());
+        
+        //解析采集项配置参数
+        if(task.getConfid() != null && !"".equals(task.getConfid())){
+            String[] confids = task.getConfid().split(",");
+            List list = new ArrayList();
+            for (int i = 0; i < confids.length; i++) {
+                if(confids[i] != null && !"".equals(confids[i])){
+                    Map map = new HashMap();
+                    map.put("taskid", task.getId());
+                    map.put("confid", new Integer(confids[i]));
+                    list.add(map);
+                }
+            }
+            if(list != null && list.size() > 0){
+            	taskMapper.deleteTaskConf(task.getId());
+                taskMapper.saveTaskConf(list);
+            }
+        }
+        taskMapper.modifyTask(task);
+    }
+
+    
+    public void deleteTask(String taskid) {
+        Task task = new Task();
+        task.setId(new Integer(taskid));
+        task.setStatus(0);//0：删除无效
+        taskMapper.deleteTask(task);
+    }
+
+     public void deletefileback(Integer id) {
+        taskMapper.deletefileback(id);
+    }
+     
+     public void modifyfileback(FileBackUp fileBackUp) {
+         taskMapper.modifyfileback(fileBackUp);
+     }
+     public void savefileback(FileBackUp fileBackUp) {
+         taskMapper.savefileback(fileBackUp);
+     }
+ 	public FileBackUp getfilebackbyId(String id) {
+		// TODO Auto-generated method stub
+		return taskMapper.getfilebackbyId(id);
+	}
+
+    @SuppressWarnings("rawtypes")
+    
+    public List<Map> getTaskConfList(Integer taskid) {
+        List<DeviceType> dev_list = global_configMapper.getDev_list();
+        //存放设备类型 和 对应的全局oid配置 和任务对应的采集项
+        List<Map> dev_conf_list = new ArrayList<Map>();
+        
+        for (DeviceType deviceType : dev_list) {
+            List<GatherItem> conf_list = taskMapper.getTaskConfList(deviceType.getId(), taskid);
+            Map<String, Object> map = new HashMap<String, Object>();
+            map.put("dev_type", deviceType);
+            map.put("config", conf_list);
+            dev_conf_list.add(map);
+        }
+        return dev_conf_list;
+        
+    }
+
+    
+    public int handle(String id, String type) {
+        Task task = new Task();
+        task.setId(new Integer(id));
+        task.setStatus(new Integer(type));
+        return taskMapper.deleteTask(task);
+    }
+
+	
+	public List getDevData(String taskid, String ip, List<String> oids,
+			int timeflag, int limitNum) {
+		DevData devData = new DevData();
+		devData.setTaskNum(taskid);
+		devData.setIp(ip);
+		devData.setOidlist(oids);
+		devData.setTimeflag(timeflag);
+		devData.setLimitNum(limitNum);
+		return taskMapper.getDevDataList(devData);
+	}
+
+    
+    public List<Map> ajaxGetDevInfo(String id, String ip) {
+        return taskMapper.ajaxGetDevInfo(id, ip);
+    }
+
+    
+    @Transactional
+    public int saveFindConfig(ScenceFindConfigVo vo) {
+        int result = 0;
+        if(vo.getValue() != null && !"".equals(vo.getValue())){
+        	if("1".equals(vo.getFlag())){
+        		List<TopoDevice> topoDevices = taskMapper.topoDevicesByTaskANDCategary(vo);
+        		ScenceFindConfigVo tmp = new ScenceFindConfigVo();
+        		tmp.setCompare_type(vo.getCompare_type());
+        		tmp.setCompare_type_name(vo.getCompare_type_name());
+        		tmp.setDev_type(vo.getDev_type());
+        		tmp.setFlag(vo.getFlag());
+        		tmp.setGather_id(vo.getGather_id());
+        		tmp.setGather_name(vo.getGather_name());
+        		tmp.setId(vo.getId());
+        		tmp.setIp(vo.getIp());
+        		tmp.setRegular_type(vo.getRegular_type());
+        		tmp.setRegular_type_name(vo.getRegular_type_name());
+        		tmp.setTask_id(vo.getTask_id());
+        		tmp.setValue(vo.getValue());
+        		for(TopoDevice t:topoDevices){
+        			if(!t.getIp().equals(vo.getIp())){
+        				tmp.setIp(t.getIp());
+        				result = taskMapper.saveFindConfig(tmp);
+        			}
+        		}
+        	}
+            result = taskMapper.saveFindConfig(vo);
+        }
+        return result;
+    }
+    
+    
+    public List<ScenceFindConfigVo> getFindConfigList(String task_id, String ip) {
+        // TODO Auto-generated method stub
+        return taskMapper.getFindConfigList(task_id, ip);
+    }
+
+    
+    public List<ScenceFindConfigVo> getFindListExists(ScenceFindConfigVo vo) {
+        // TODO Auto-generated method stub
+        return taskMapper.getFindListExists(vo);
+    }
+
+    
+    public int deleteFind(String id) {
+        return taskMapper.deleteFind(id);
+    }
+
+    
+    public List<Task> getTaskStarList(String nowtime, String agotime) {
+        return taskMapper.getTaskStarList(nowtime, agotime);
+    }
+
+    
+    public List<Task> getTaskEndList(String nowtime, String agotime) {
+        return taskMapper.getTaskEndList(nowtime, agotime);
+    }
+
+    
+    public List<ComplexDataVo> getCalcOidValue(String task_id, String ip, int gather_id) {
+        return taskMapper.getCalcOidValue(task_id, ip, gather_id);
+    }
+
+    
+    public List getDevData(String taskid, String ip, List<String> oidList) {
+        DevData devData = new DevData();
+        devData.setTaskNum(taskid);
+        devData.setIp(ip);
+        devData.setOidlist(oidList);
+        return taskMapper.getDevDataListAll(devData);
+    }
+
+    //获取所有oid信息
+    public Map getOidInfo(List valueList, HashMap oid_en) {
+        HashMap mapL = new HashMap();
+        for(int i=0; i<valueList.size(); i++){
+            DevData devData = (DevData)valueList.get(i);
+            String oid = devData.getOid();
+            System.out.println(oid);
+            if("1.3.6.1.2.1.25.2.3.1".equals(oid)){ //硬盘使用大小
+                mapL.putAll(oidParseServiceImpl.getHardInfo(devData));
+            }else if("1.3.6.1.2.1.4.20.1".equals(oid)){ //ip信息
+                mapL.putAll(oidParseServiceImpl.getIpInfo(devData));
+            }else if("1.3.6.1.2.1.2.2.1".equals(oid)){ //if信息
+                mapL.putAll(oidParseServiceImpl.getIfInfo(devData));
+            }else if("1.3.6.1.2.1.4.21.1".equals(oid)){ //路由
+                mapL.putAll(oidParseServiceImpl.getRouterInfo(devData));
+            }else if("1.3.6.1.2.1.6.13.1".equals(oid)){ //tcp
+                mapL.putAll(oidParseServiceImpl.getTcpInfo(devData));
+            }else if("1.3.6.1.2.1.7.5.1".equals(oid)){ //udp
+                mapL.putAll(oidParseServiceImpl.getUdpInfo(devData));
+            }else if("1.3.6.1.2.1.25.4.2.1".equals(oid)){ //进程信息
+                mapL.putAll(oidParseServiceImpl.getProcessInfo(devData)); 
+            }else if("1.3.6.1.2.1.25.5.1.1".equals(oid)){ //进程所占CPU内存信息
+                mapL.putAll(oidParseServiceImpl.getProcessPerfCPUInfo(devData)); 
+            }else if("1.3.6.1.2.1.25.3.2.1".equals(oid)){ //设备信息
+                mapL.putAll(oidParseServiceImpl.getDeviceInfo(devData));
+            }else if("1.3.6.1.2.1.25.6.3.1".equals(oid)){ //安装程序信息
+                //mapL.putAll(oidParseServiceImpl.getInstalledInfo(devData));
+            }else{ //单个值，不需要要解析的oid
+                mapL.put(oid_en.get(oid), devData.getValue());
+            }
+        }
+        return mapL;
+    }
+
+    
+    public List getLastBatchs(String taskid, String ip, int limitNum) {
+        DevData devData = new DevData();
+        devData.setTaskNum(taskid);
+        devData.setIp(ip);
+        devData.setLimitNum(limitNum);
+        return taskMapper.getLastBatchs(devData);
+    }
+    
+    
+    public List getMultiData(String taskid, String ip,
+            List<String> multiOidList, List<String> batchList) {
+        DevData devData = new DevData();
+        devData.setTaskNum(taskid);
+        devData.setIp(ip);
+        devData.setOidlist(multiOidList);
+        devData.setBatchlist(batchList);
+        return taskMapper.getMultiData(devData);
+    }
+
+    
+    public Map getMultiOidInfo(List valueList, List<String> batchList) {
+        HashMap mapL = new HashMap();
+        String tcp_1 = "";
+        String tcp_2 = "";
+        String tcp_3 = "";
+        String tcp_4 = "";
+        String udp_1 = "";
+        String udp_2 = "";
+        String udp_3 = "";
+        String udp_4 = "";
+        for(int i=0 ; i<batchList.size() ;i++){
+            int batch = Integer.parseInt(batchList.get(i));
+            tcp_1 += ",";
+            tcp_2 += ",";
+            tcp_3 += ",";
+            tcp_4 += ",";
+            udp_1 += ",";
+            udp_2 += ",";
+            udp_3 += ",";
+            udp_4 += ",";
+            for(int j=0; j<valueList.size(); j++){
+                DevData devData = (DevData)valueList.get(j);
+                String oid = devData.getOid();
+                String value = devData.getValue();
+                int batch1 = devData.getBatch();
+                if(batch == batch1){
+                    if("1.3.6.1.2.1.6.10.0".equals(oid)){
+                        tcp_1 += value;
+                    }else if("1.3.6.1.2.1.6.11.0".equals(oid)){
+                        tcp_2 += value;
+                    }else if("1.3.6.1.2.1.6.14.0".equals(oid)){
+                        tcp_3 += value;
+                    }else if("1.3.6.1.2.1.6.15.0".equals(oid)){
+                        tcp_4 += value;
+                    }else if("1.3.6.1.2.1.7.1.0".equals(oid)){
+                        udp_1 += value;
+                    }else if("1.3.6.1.2.1.7.2.0".equals(oid)){
+                        udp_2 += value;
+                    }else if("1.3.6.1.2.1.7.3.0".equals(oid)){
+                        udp_3 += value;
+                    }else if("1.3.6.1.2.1.7.4.0".equals(oid)){
+                        udp_4 += value;
+                    }
+                }
+            }
+            if(tcp_1.endsWith(",")){
+                tcp_1 += "0";
+            }else if(tcp_2.endsWith(",")){
+                tcp_2 += "0";
+            }else if(tcp_3.endsWith(",")){
+                tcp_3 += "0";
+            }else if(tcp_4.endsWith(",")){
+                tcp_4 += "0";
+            }else if(udp_1.endsWith(",")){
+                udp_1 += "0";
+            }else if(udp_2.endsWith(",")){
+                udp_2 += "0";
+            }else if(udp_3.endsWith(",")){
+                udp_3 += "0";
+            }else if(udp_4.endsWith(",")){
+                udp_4 += "0";
+            }
+        }
+        
+        mapL.put("tcp_1", tcp_1.substring(1));
+        mapL.put("tcp_2", tcp_2.substring(1));
+        mapL.put("tcp_3", tcp_3.substring(1));
+        mapL.put("tcp_4", tcp_4.substring(1));
+        
+        mapL.put("udp_1", udp_1.substring(1));
+        mapL.put("udp_2", udp_2.substring(1));
+        mapL.put("udp_3", udp_3.substring(1));
+        mapL.put("udp_4", udp_4.substring(1));
+        return mapL;
+    }
+
+    
+    public void modifyTaskTime(Task taskUpdate) {
+        taskUpdate.setOperTime(new Date());
+        taskMapper.modifyTaskTime(taskUpdate);
+    }
+
+    public String updateTaskById(String id, String value) {
+        String handleResult = "";
+        Task task = new Task();
+        task.setId(Integer.parseInt(id));
+        task.setOperTime(new Date());
+        
+        if("010".equals(value)){
+            handleResult = "启动成功！";
+            task.setStatus(2);
+            task.setStarTime(new Date());
+            taskMapper.modifyTaskTime(task);
+            //开始采集流量
+            //JwsFlowDevClient.capPackets("1", id);
+        }else if("011".equals(value)){
+            handleResult = "启动失败！";
+        }
+        else if("020".equals(value)){
+            handleResult = "暂停成功！";
+            task.setStatus(3);
+            taskMapper.modifyTaskTime(task);
+            //结束采集流量
+            JwsFlowDevClient.capPackets("2", id);
+        }else if("021".equals(value)){
+            handleResult = "暂停失败！";
+        }
+        else if("030".equals(value)){
+            handleResult = "终止成功！";
+            task.setStatus(4);
+            task.setEndTime(new Date());
+            taskMapper.modifyTaskTime(task);
+            //结束采集流量
+            JwsFlowDevClient.capPackets("2", id);
+        }else if("031".equals(value)){
+            handleResult = "终止失败！";
+        }
+        else if("040".equals(value)){
+            handleResult = "重启成功！";
+            task.setStatus(2);
+            taskMapper.modifyTaskTime(task);
+            //开始采集流量
+            //JwsFlowDevClient.capPackets("1", id);
+        }else if("041".equals(value)){
+            handleResult = "重启失败！";
+        }
+        else {
+            handleResult = "操作出现异常！";
+        }
+        return handleResult;
+    }
+
+    /**
+     * 获取ip设备
+     * @param task_id
+     * @return
+     */
+    public List<GatherItemTree> getTaskIp(String task_id) {
+        return taskMapper.getTaskIp(task_id);
+    }
+    
+    /**
+     * 获取ip设备下的采集项分类
+     * @param task_id
+     * @return
+     */
+    public List<GatherItemTree> getTaskIpSystype(String task_id) {
+        return taskMapper.getTaskIpSystype(task_id);
+    }
+
+    /**
+     * 获取ip设备下的采集项
+     * @param task_id
+     * @return
+     */
+    public List<GatherItemTree> getGatherItems(String task_id) {
+        return taskMapper.getGatherItems(task_id);
+    }
+    
+    /**
+     * 根据任务id和ip获取设备类型
+     * @param task_id
+     * @param ip
+     * @return
+     * @author hekun
+     * @version V1.0
+     */
+    public String judgeType(String task_id,String ip){
+    	return taskMapper.judgeType(task_id,ip);
+    }
+
+    /**
+     * 根据服务端id查询整条记录
+     * @param serverId
+     * @return
+     * @author hekun
+     * @version V1.0
+     */
+	public VmbackServer getVmbackServerbyId(Integer serverId) {
+		return taskMapper.getVmbackServerbyId(serverId);
+	}
+
+	/**
+	 * 修改虚拟机快照配置
+	 * @param vmbackServer
+	 * @return
+	 * @author hekun
+	 * @version V1.0
+	 */
+	public boolean modifyVmback(VmbackServer vmbackServer) {
+		
+		return taskMapper.updateVmbackServer(vmbackServer);
+	}
+
+	/**
+	 * 
+	 * @param valueOf
+	 * @author hekun
+	 * @version V1.0
+	 */
+	public boolean deleteVmbackById(Integer id) {
+		return taskMapper.deleteVmbackById(id);
+	}
+
+	/**
+	 * 添加虚拟机快照服务端配置
+	 * @param vmbackServer
+	 * @author hekun
+	 * @version V1.0
+	 */
+	public boolean saveVmback(VmbackServer vmbackServer) {
+		return taskMapper.saveVmback(vmbackServer);
+	}
+
+	public List<VmbackClient> getVmbackClientbyId(Integer serverId) {
+		return taskMapper.getVmbackClientList(serverId);
+	}
+
+	/**
+	 * 添加虚拟机快照客户端配置
+	 * @param vmbackClient
+	 * @return
+	 * @author hekun
+	 * @version V1.0
+	 */
+	public boolean saveVmbackClient(VmbackClient vmbackClient) {
+		return taskMapper.saveVmbackClient(vmbackClient);
+	}
+
+	/**
+	 * 根据id删除虚拟机快照客户端配置
+	 * @param clientId
+	 * @return
+	 * @author hekun
+	 * @version V1.0
+	 */
+	public boolean deleteVmbackClientById(Integer clientId) {
+		return taskMapper.deleteVmbackClientById(clientId);
+	}
+	
+	/**
+	 * 保存场景回溯中复制的子任务
+	 * @param task
+	 * @return
+	 * @author hekun
+	 * @version V1.0
+	 */
+	@Transactional
+	public int saveCopyTask(Task task , String id){
+		taskMapper.saveTask(task);
+		int taskid = task.getId();
+		List<TopoDevice> devList = netTopoMapper.getDevList(id);
+		List<TopoDeviceConn> connList = netTopoMapper.getConnList(id);
+		for(int i = 0 ;i < devList.size();i++){
+			devList.get(i).setTask_id(taskid+"");
+		}
+		netTopoMapper.saveTopoDevices(devList);
+		for(int j= 0 ;j < connList.size() ; j++){
+			connList.get(j).setTask_id(taskid+"");
+		}	
+		netTopoMapper.saveTopoDeviceConns(connList);
+		List<TaskConfig> configList = taskMapper.getTaskConfigList(Integer.parseInt(id));
+		for(int k=0 ; k < configList.size(); k++){
+			configList.get(k).setTaskid(taskid+"");
+			
+		}
+		taskMapper.saveTaskConf(configList);
+		return taskid;
+	}
+}
